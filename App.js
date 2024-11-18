@@ -1,99 +1,98 @@
-import React from 'react'
-import { StatusBar, View, Text, Image, TouchableOpacity } from 'react-native'
+import React, { useState } from 'react'
+import { StatusBar, View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
 import { createStackNavigator } from '@react-navigation/stack'
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator,  useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useFonts } from 'expo-font'; // Import useFonts
+import { AppLoading } from 'expo';
 import Home from './screens/Home'
+import Welcome from './screens/Welcome';
+import ViewImage from './screens/ViewImage';
+import Videos from "./screens/Videos";
+import Profile from './screens/Profile';
+import Crear from './screens/Crear';
+import colors from './config/colors';
 
 const Stack = createStackNavigator()
 
-function MyTabBar({ state, descriptors, navigation }) {
+function MyTabs() {
   return (
-    <View style={{ flexDirection: 'row' , alignItems: 'center', backgroundColor: '#121212', height: 40, paddingBottom: 10}}>
-      {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key];
-        const label =
-          options.tabBarLabel !== undefined
-            ? options.tabBarLabel
-            : options.title !== undefined
-              ? options.title
-              : route.name;
-
-        const isFocused = state.index === index;
-
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-          });
-
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
-
-        const onLongPress = () => {
-          navigation.emit({
-            type: 'tabLongPress',
-            target: route.key,
-          });
-        };
-
-        return (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={options.tabBarAccessibilityLabel}
-            testID={options.tabBarTestID}
-            onPress={onPress}
-            onLongPress={onLongPress}
-            style={{ flex: 1 }}
-          >
-            <Text style={{marginLeft: 10, color: isFocused ? '#ffffff' : '#ff0000' }}>
-              {label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
+    <Tab.Navigator
+      initialRouteName="Home"
+      screenOptions={{
+        tabBarActiveTintColor: colors.terciary,
+        tabBarStyle: { position: 'absolute' , backgroundColor: '#121212', borderTopWidth: 0},
+        headerShown: false,
+      }}
+    >
+      <Tab.Screen
+        name="Dilemas"
+        component={Home}
+        options={{
+          tabBarLabel: 'Dilemas',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="home" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Crear"
+        component={Crear}
+        options={{
+          tabBarLabel: 'Crear',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="star-plus" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={Profile}
+        options={{
+          tabBarLabel: 'Perfil',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="account" color={color} size={size} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
   );
 }
 
 const Tab = createBottomTabNavigator();
 
 export default function App() {
-  return(
-    <>
-      <StatusBar 
-        barStyle = {'light-content'}
-        backgroundColor={"#121212"}
-      />
 
-      <NavigationContainer>
-          <Stack.Screen
-            name = "Home"
-            component = { Home }
-            options= {{
-              headerLeft: () => (
-                <View style = {{flexDirection: 'row', alignItems: 'center'}}>
-                  <Image
-                    style = {{width: 40, height: 40, marginRight: 10, marginLeft: 10}}
-                    source = {{uri: 'https://www.clipartmax.com/png/middle/236-2361875_pusheen-aka-the-cute-of-cuteness-by-favouritefi-cute-cat-drawing-png.png'}}
-                  />
-                  <Text style = {{color: 'white', fontSize: 18}}> Pito </Text>
-                </View>
-              ),
-              headerTitleAlign: 'center',
-              headerStyle: {
-                backgroundColor: "#121212"
-              },
-              headerTintColor: '#fff'
-            }}
-          />
-        <Tab.Navigator tabBar={(props) => <MyTabBar {...props} />}>
-          <Tab.Screen name="Home" component={Home} />
-        </Tab.Navigator>
-      </NavigationContainer>
-    </>
-  )
+  let [fontsLoaded] = useFonts({
+    'Spartan': require('./assets/Fonts/LeagueSpartanRegular.ttf'),
+    'SpartanLight': require('./assets/Fonts/LeagueSpartanLight.ttf'),
+    'SpartanBold': require('./assets/Fonts/LeagueSpartanBold.ttf')
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading Fonts...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      <StatusBar barStyle="light-content" />
+      <MyTabs/>
+    </NavigationContainer>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
+});
