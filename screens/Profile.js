@@ -3,12 +3,15 @@ import {StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
 import colors from '../config/colors';
 import AppTexto from '../components/AppTexto'
 import AppButton from '../components/AppButton';
+import { useAuth } from '../axios/AuthenticationService';
+import { getUserData } from '../axios/AuthenticationService';
 import axios from 'axios';
 
-function Profile(props) {
+function Profile({navigation}) {
 
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [catImage, setCatImage] = useState(null); 
+    const [catImage, setCatImage] = useState(null);
+    const {setIsLoggedIn, isLoggedIn} = useAuth();
+    const [user, setUser] = useState(null);
 
     const apiKey = "live_DwuKsp5Ytr7m035g1GhLJdXvhLZHcqNVbqslsmJD776sBOlarZv2dMiRZXABmM2W"; 
 
@@ -28,6 +31,21 @@ function Profile(props) {
           });
       }, []);
 
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const userData = await getUserData();
+                setUser(userData);
+
+             } catch (error) {
+                Alert.alert('Error', 'No se pudieron obtener los datos');
+                console.log('paso este pedo', error);
+              }
+          };
+  
+          fetchData();
+      }, []);
+
     if (!isLoggedIn) {
         return (
         <View style={styles.background}>
@@ -37,7 +55,7 @@ function Profile(props) {
                 <TouchableOpacity onPress={() => alert(`Finje que te registras porfa`)} style={styles.add}>
                         <Text style={styles.addText}>Registrarse</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => {alert(`Si te logeaste jaaja`); setIsLoggedIn(true)}}  style={styles.add}>
+                <TouchableOpacity onPress={() => {alert(`Ve a logearte joto`); navigation.navigate('Login')}}  style={styles.add}>
                     <Text style={styles.addText}>Log in</Text>
                  </TouchableOpacity>
             </View>
@@ -52,7 +70,7 @@ function Profile(props) {
                 ) : (
                     <Image source={require('../assets/yippe.png')} style={styles.cat}/>
                 )}
-                <Text style={styles.texto}> Gatensio Gaturco </Text>
+                <Text style={styles.texto}> {user?.username} </Text>
             </View>
             <View style = {{marginBottom: 100}}></View>
             <View style={styles.container}>

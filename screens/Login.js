@@ -1,43 +1,52 @@
-import { React, useState } from 'react';
-import { StyleSheet, Text, View, Image, TextInput, TouchableOpacity } from 'react-native';
+import {React, useState, useEffect} from 'react';
+import {StyleSheet, Text, View, TouchableOpacity, Image, TextInput, Alert } from 'react-native';
 import colors from '../config/colors';
+import { loginUser } from '../axios/AuthenticationService';
+import { useAuth } from '../axios/AuthenticationService';
 
-function Crear(props) {
-    const [message, setMessage] = useState("");
-    const [message2, setMessage2] = useState("");
-    const [message3, setMessage3] = useState("");
+function Login({navigation}) {
+
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const { setIsLoggedIn } = useAuth();
+
+    const handleLogin = async () => {
+        try {
+            console.log('Intentando iniciar sesión con:', email, password);
+            const response = await loginUser(email, password);
+            setIsLoggedIn(true); 
+            Alert.alert('Login exitoso', response.data);
+            navigation.navigate('Profile');
+        } catch (error) {
+            console.error('Error en loginUser:', error);
+            Alert.alert('Error', 'Credenciales incorrectas');
+        }
+    };
 
     return (
         <View style={styles.background}>
             <View style={styles.container}>
-                <Text style={styles.titulo}> Crea tu Dilema </Text>
+            <Text style={styles.titulo}> Loggeate Aqui </Text>
                 <View style={styles.formContainer}>
-                    <Text style={styles.texto}> Pregunta </Text>
+                    <Text style={styles.texto}> Email </Text>
                     <TextInput
-                        placeholder="¿Qué prefieres?"
-                        value={message}
-                        onChangeText={(text) => setMessage(text)}
+                        placeholder="alguien.ejemplo@gmail.com"
+                        value={email}
+                        onChangeText={(text) => setEmail(text)}
                         style={styles.input}
                         placeholderTextColor={colors.placeholder}
                     />
-                    <Text style={styles.texto}> Opción 1 </Text>
+                    <Text style={styles.texto}> Contraseña </Text>
                     <TextInput
-                        placeholder="Perder un brazo"
-                        value={message2}
-                        onChangeText={(text1) => setMessage2(text1)}
+                        placeholder="Espero no hayas puesto 123"
+                        secureTextEntry={true}
+                        value={password}
+                        onChangeText={(text2) => setPassword(text2)}
                         style={styles.input}
                         placeholderTextColor={colors.placeholder}
                     />
-                    <Text style={styles.texto}> Opción 2 </Text>
-                    <TextInput
-                        placeholder="Comerte unas Emperador de limón"
-                        value={message3}
-                        onChangeText={(text2) => setMessage3(text2)}
-                        style={styles.input}
-                        placeholderTextColor={colors.placeholder}
-                    />
-                    <TouchableOpacity onPress={() => alert(`Pregunta: ${message}\nOpcion 1: ${message2}\nOpcion 2: ${message3}`)} style={styles.add}>
-                        <Text style={styles.addText}>Crear Dilema</Text>
+                    <TouchableOpacity onPress={handleLogin} style={styles.add}>
+                        <Text style={styles.addText}>Login :)</Text>
                     </TouchableOpacity>
                 </View>
                 <Image source={require('../assets/DilemaLogo.png')} style={styles.logo} />
@@ -86,8 +95,6 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         width: '100%',
         fontSize: 16,
-        borderColor: colors.terciary, 
-        borderWidth: 2, 
     },
     add: {
         backgroundColor: colors.terciary,
@@ -105,4 +112,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default Crear;
+export default Login;

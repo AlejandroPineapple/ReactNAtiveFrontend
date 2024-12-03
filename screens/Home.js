@@ -64,6 +64,97 @@ const ItemCom = ({ comentario }) => (
 const Home = () => {
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  if (!isLoggedIn) {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.container}>
+          <FlatList
+            data={DATA}
+            renderItem={({ item }) => (
+              <View>
+                <Item
+                  pregunta={item.pregunta}
+                  opcion1={item.opcion1}
+                  opcion2={item.opcion2}
+                />
+                <Modal
+                  animationType="slide"
+                  transparent={true}
+                  visible={modalVisible}
+                  onRequestClose={() => {
+                      setModalVisible(!modalVisible);
+                  }}>
+                  <View style={styles.centeredView}>
+                      <View style={styles.modalView}>
+                      <Text style={styles.texto}>Comentarios</Text>
+                      <FlatList
+                          data={Comentarios}
+                          renderItem={({ item }) => <ItemCom comentario={item.texto} />}
+                          keyExtractor={(item, index) => index.toString()}
+                      />
+                      <Pressable
+                          style={[styles.button, styles.buttonClose]}
+                          onPress={() => setModalVisible(!modalVisible)}>
+                          <Text style={styles.textoModal}>Cerrar</Text>
+                      </Pressable>
+                      </View>
+                  </View>
+                  </Modal>
+                <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.comentarios}>
+                  <Image source={require('../assets/comentarios.png')} style={styles.comentariosImagen} />
+                </TouchableOpacity>
+              </View>
+            )}
+          />
+        </SafeAreaView>
+      </SafeAreaProvider>
+    );} else {
+      return (
+        <SafeAreaProvider>
+          <SafeAreaView style={styles.container}>
+            <FlatList
+              data={DATA}
+              renderItem={({ item }) => (
+                <View>
+                  <Item
+                    pregunta={item.pregunta}
+                    opcion1={item.opcion1}
+                    opcion2={item.opcion2}
+                  />
+                  <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={modalVisible}
+                    onRequestClose={() => {
+                        setModalVisible(!modalVisible);
+                    }}>
+                    <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                        <Text style={styles.texto}>Comentarios</Text>
+                        <FlatList
+                            data={Comentarios}
+                            renderItem={({ item }) => <ItemCom comentario={item.texto} />}
+                            keyExtractor={(item, index) => index.toString()}
+                        />
+                        <Pressable
+                            style={[styles.button, styles.buttonClose]}
+                            onPress={() => setModalVisible(!modalVisible)}>
+                            <Text style={styles.textoModal}>Cerrar</Text>
+                        </Pressable>
+                        </View>
+                    </View>
+                    </Modal>
+                  <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.comentarios}>
+                    <Image source={require('../assets/comentarios.png')} style={styles.comentariosImagen} />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          </SafeAreaView>
+        </SafeAreaProvider>
+      );}
 
   return (
     <SafeAreaProvider>

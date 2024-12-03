@@ -5,5 +5,6 @@ export default {
     terciary: '#e91e63',
     black: '#000',
     white: '#fff',
+    gray: '#808080',
     placeholder: '#808080'
 }

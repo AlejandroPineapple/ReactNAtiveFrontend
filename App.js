@@ -6,12 +6,14 @@ import { createBottomTabNavigator,  useBottomTabBarHeight } from '@react-navigat
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font'; // Import useFonts
 import { AppLoading } from 'expo';
+import { AuthProvider } from './axios/AuthenticationService';
 import Home from './screens/Home'
 import Welcome from './screens/Welcome';
 import ViewImage from './screens/ViewImage';
 import Videos from "./screens/Videos";
 import Profile from './screens/Profile';
 import Crear from './screens/Crear';
+import Login from './screens/Login';
 import colors from './config/colors';
 
 const Stack = createStackNavigator()
@@ -79,10 +81,15 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <StatusBar barStyle="light-content" />
-      <MyTabs/>
-    </NavigationContainer>
+    <AuthProvider>
+      <NavigationContainer>
+          <StatusBar barStyle="light-content" />
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="MainTabs" component={MyTabs} />
+                <Stack.Screen name="Login" component={Login} />
+            </Stack.Navigator>
+      </NavigationContainer>
+    </AuthProvider>
   );
 }
 
