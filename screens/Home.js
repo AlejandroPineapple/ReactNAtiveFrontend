@@ -1,200 +1,102 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, FlatList, StyleSheet, Text, TouchableOpacity, Image, Alert, Modal, Pressable } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import colors from '../config/colors';
-
-const DATA = [
-  {
-    pregunta: 'Que prefieres?',
-    opcion1: 'Que el profe te ponga 10',
-    opcion2: 'Dormir'
-  },
-  {
-    pregunta: 'Que prefieres?',
-    opcion1: 'Morir ahogado',
-    opcion2: 'Morir Quemado'
-  },
-  {
-    pregunta: 'Que prefieres?',
-    opcion1: 'Aprobar',
-    opcion2: 'Tener salud mental'
-  },
-  {
-    pregunta: 'Que prefieres?',
-    opcion1: '5000 Monsters',
-    opcion2: 'No necesitar el monster para funcionar como miembro de la sociedad'
-  },
-  {
-    pregunta: 'Que prefieres?',
-    opcion1: 'Dormir',
-    opcion2: 'Dormir ya me quiero dormir porfavor ayuda'
-  },
-];
-
-const Comentarios = [
-    {
-        texto: 'Esto es un gran comentario'
-    },
-    {
-        texto: 'Esto tambien'
-    },
-    {
-        texto: 'Esto no lol'
-    },
-]
-
-const Item = ({ pregunta, opcion1, opcion2 }) => (
-  <View style={styles.item}>
-    <Text style={styles.pregunta}>{pregunta}</Text>
-    <TouchableOpacity onPress={() => Alert.alert(`¡Wuuu! Elegiste ${opcion1}`)} style={styles.opcion1}>
-      <Text style={styles.texto}>{opcion1}</Text>
-    </TouchableOpacity>
-    <TouchableOpacity onPress={() => Alert.alert(`¡Wuuu! Elegiste ${opcion2}`)} style={styles.opcion2}>
-      <Text style={styles.texto}>{opcion2}</Text>
-    </TouchableOpacity>
-  </View>
-);
-
-const ItemCom = ({ comentario }) => (
-  <View style={styles.item}>
-    <Text style={styles.textoComentario}>{comentario}</Text>
-  </View>
-);
+import api from '../axios/ApiPreguntas';
+import { elegirOpcion } from '../axios/AuthenticationService';
+import { useAuth } from '../axios/AuthenticationService';
 
 const Home = () => {
+  const [preguntas, setPreguntas] = useState([]); 
+  const [selectedPregunta, setSelectedPregunta] = useState(null); 
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  useEffect(() => {
+    const fetchPreguntas = async () => {
+      try {
+        const response = await api.get('/preguntas/lista');
+        setPreguntas(response.data);
+      } catch (error) {
+        console.error('Error obteniendo las preguntas:', error.response?.data || error.message);
+        Alert.alert('Error', 'No se pudieron cargar las preguntas');
+      }
+    };
 
-  if (!isLoggedIn) {
+    fetchPreguntas();
+  }, []);
+
+  const handleElegirOpcion = async (_id, opcion) => {
+    try {
+      await elegirOpcion(_id, opcion);
+      const preguntaActualizada = preguntas.find(p => p._id === _id);
+
+      if (preguntaActualizada) {
+        const nuevaOpcion1 = opcion === "opcion1" ? (preguntaActualizada.opcion1_elegida || 0) + 1 : preguntaActualizada.opcion1_elegida;
+        const nuevaOpcion2 = opcion === "opcion2" ? (preguntaActualizada.opcion2_elegida || 0) + 1 : preguntaActualizada.opcion2_elegida;
+
+        const totalVotos = nuevaOpcion1 + nuevaOpcion2;
+        const porcentajeOpcion1 = Math.round((nuevaOpcion1 / totalVotos) * 100);
+        const porcentajeOpcion2 = Math.round((nuevaOpcion2 / totalVotos) * 100);
+
+        const preguntasActualizadas = preguntas.map(p =>
+          p._id === _id
+            ? { ...p, opcion1_elegida: nuevaOpcion1, opcion2_elegida: nuevaOpcion2, porcentajeOpcion1, porcentajeOpcion2 }
+            : p
+        );
+
+        setPreguntas(preguntasActualizadas);
+        setSelectedPregunta(_id); // Marca la pregunta seleccionada
+      }
+    } catch (error) {
+      console.error('Error al votar:', error.response?.data || error.message);
+      Alert.alert('Error', 'No se pudo registrar tu voto');
+    }
+  };
+
+  const Item = ({ _id, pregunta, opcion1, opcion2, opcion1_elegida, opcion2_elegida, porcentajeOpcion1, porcentajeOpcion2 }) => {
+    const yaVotada = selectedPregunta === _id;
+
     return (
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.container}>
-          <FlatList
-            data={DATA}
-            renderItem={({ item }) => (
-              <View>
-                <Item
-                  pregunta={item.pregunta}
-                  opcion1={item.opcion1}
-                  opcion2={item.opcion2}
-                />
-                <Modal
-                  animationType="slide"
-                  transparent={true}
-                  visible={modalVisible}
-                  onRequestClose={() => {
-                      setModalVisible(!modalVisible);
-                  }}>
-                  <View style={styles.centeredView}>
-                      <View style={styles.modalView}>
-                      <Text style={styles.texto}>Comentarios</Text>
-                      <FlatList
-                          data={Comentarios}
-                          renderItem={({ item }) => <ItemCom comentario={item.texto} />}
-                          keyExtractor={(item, index) => index.toString()}
-                      />
-                      <Pressable
-                          style={[styles.button, styles.buttonClose]}
-                          onPress={() => setModalVisible(!modalVisible)}>
-                          <Text style={styles.textoModal}>Cerrar</Text>
-                      </Pressable>
-                      </View>
-                  </View>
-                  </Modal>
-                <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.comentarios}>
-                  <Image source={require('../assets/comentarios.png')} style={styles.comentariosImagen} />
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-        </SafeAreaView>
-      </SafeAreaProvider>
-    );} else {
-      return (
-        <SafeAreaProvider>
-          <SafeAreaView style={styles.container}>
-            <FlatList
-              data={DATA}
-              renderItem={({ item }) => (
-                <View>
-                  <Item
-                    pregunta={item.pregunta}
-                    opcion1={item.opcion1}
-                    opcion2={item.opcion2}
-                  />
-                  <Modal
-                    animationType="slide"
-                    transparent={true}
-                    visible={modalVisible}
-                    onRequestClose={() => {
-                        setModalVisible(!modalVisible);
-                    }}>
-                    <View style={styles.centeredView}>
-                        <View style={styles.modalView}>
-                        <Text style={styles.texto}>Comentarios</Text>
-                        <FlatList
-                            data={Comentarios}
-                            renderItem={({ item }) => <ItemCom comentario={item.texto} />}
-                            keyExtractor={(item, index) => index.toString()}
-                        />
-                        <Pressable
-                            style={[styles.button, styles.buttonClose]}
-                            onPress={() => setModalVisible(!modalVisible)}>
-                            <Text style={styles.textoModal}>Cerrar</Text>
-                        </Pressable>
-                        </View>
-                    </View>
-                    </Modal>
-                  <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.comentarios}>
-                    <Image source={require('../assets/comentarios.png')} style={styles.comentariosImagen} />
-                  </TouchableOpacity>
-                </View>
-              )}
-            />
-          </SafeAreaView>
-        </SafeAreaProvider>
-      );}
+      <View style={styles.item}>
+        <Text style={styles.pregunta}>{pregunta}</Text>
+        <TouchableOpacity
+          onPress={() => handleElegirOpcion(_id, "opcion1")}
+          style={styles.opcion1}
+          disabled={yaVotada}
+        >
+          <Text style={styles.texto}>
+            {yaVotada ? `Opción 1: ${porcentajeOpcion1 || 0}%` : opcion1}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => handleElegirOpcion(_id, "opcion2")}
+          style={styles.opcion2}
+          disabled={yaVotada}
+        >
+          <Text style={styles.texto}>
+            {yaVotada ? `Opción 2: ${porcentajeOpcion2 || 0}%` : opcion2}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
         <FlatList
-          data={DATA}
+          data={preguntas}
+          keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
-            <View>
-              <Item
-                pregunta={item.pregunta}
-                opcion1={item.opcion1}
-                opcion2={item.opcion2}
-              />
-              <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => {
-                    setModalVisible(!modalVisible);
-                }}>
-                <View style={styles.centeredView}>
-                    <View style={styles.modalView}>
-                    <Text style={styles.texto}>Comentarios</Text>
-                    <FlatList
-                        data={Comentarios}
-                        renderItem={({ item }) => <ItemCom comentario={item.texto} />}
-                        keyExtractor={(item, index) => index.toString()}
-                    />
-                    <Pressable
-                        style={[styles.button, styles.buttonClose]}
-                        onPress={() => setModalVisible(!modalVisible)}>
-                        <Text style={styles.textoModal}>Cerrar</Text>
-                    </Pressable>
-                    </View>
-                </View>
-                </Modal>
-              <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.comentarios}>
-                <Image source={require('../assets/comentarios.png')} style={styles.comentariosImagen} />
-              </TouchableOpacity>
-            </View>
+            <Item
+              _id={item._id}
+              pregunta={item.pregunta}
+              opcion1={item.opcion1}
+              opcion2={item.opcion2}
+              opcion1_elegida={item.opcion1_elegida}
+              opcion2_elegida={item.opcion2_elegida}
+              porcentajeOpcion1={item.porcentajeOpcion1}
+              porcentajeOpcion2={item.porcentajeOpcion2}
+            />
           )}
         />
       </SafeAreaView>

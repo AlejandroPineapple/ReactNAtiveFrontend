@@ -5,6 +5,8 @@ import AppTexto from '../components/AppTexto'
 import AppButton from '../components/AppButton';
 import { useAuth } from '../axios/AuthenticationService';
 import { getUserData } from '../axios/AuthenticationService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { loginUser } from '../axios/AuthenticationService';
 import axios from 'axios';
 
 function Profile({navigation}) {
@@ -33,18 +35,47 @@ function Profile({navigation}) {
 
     useEffect(() => {
         const fetchData = async () => {
-            try {
-                const userData = await getUserData();
-                setUser(userData);
 
-             } catch (error) {
-                Alert.alert('Error', 'No se pudieron obtener los datos');
-                console.log('paso este pedo', error);
-              }
-          };
-  
-          fetchData();
-      }, []);
+            try {
+                const token = await AsyncStorage.getItem('token');
+                if (token) {
+                    const userData = await getUserData();
+                    setUser(userData);
+                    setIsLoggedIn(true); 
+                } else {
+                    setIsLoggedIn(false); 
+                }
+            } catch (error) {
+                console.log('Error al obtener datos de usuario:', error);
+                Alert.alert('Error', 'Hubo un problema al verificar el token.');
+            }
+        };
+
+        fetchData();
+      }, [isLoggedIn]);
+
+      // Función para manejar el logout
+    const handleLogout = async () => {
+        try {
+            await AsyncStorage.clear();
+            setIsLoggedIn(false);
+            alert('Adios pues.');
+        } catch (error) {
+            console.error('Error limpiando AsyncStorage:', error);
+            alert('Hubo un problema cerrando sesión.');
+        }
+    };
+
+    const handleLogin = async () => {
+        try {
+            console.log('Intentando iniciar sesión con:', email, password);
+            const response = await loginUser(email, password);
+            setIsLoggedIn(true); 
+        } catch (error) {
+            console.error('Error en loginUser:', error);
+            Alert.alert('Error', 'Credenciales incorrectass');
+        }
+    };
 
     if (!isLoggedIn) {
         return (
@@ -52,10 +83,10 @@ function Profile({navigation}) {
             <View style={styles.container}>
                 <Text style={styles.titulo}> Registrate o Loggeate o lo que sea a</Text>
                 <Image source={require('../assets/DilemaLogo.png')} style={styles.logo} />
-                <TouchableOpacity onPress={() => alert(`Finje que te registras porfa`)} style={styles.add}>
+                <TouchableOpacity onPress={() => {navigation.navigate('Register')}} style={styles.add}>
                         <Text style={styles.addText}>Registrarse</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => {alert(`Ve a logearte joto`); navigation.navigate('Login')}}  style={styles.add}>
+                <TouchableOpacity onPress={() => {navigation.navigate('Login')}}  style={styles.add}>
                     <Text style={styles.addText}>Log in</Text>
                  </TouchableOpacity>
             </View>
@@ -70,18 +101,20 @@ function Profile({navigation}) {
                 ) : (
                     <Image source={require('../assets/yippe.png')} style={styles.cat}/>
                 )}
-                <Text style={styles.texto}> {user?.username} </Text>
-            </View>
-            <View style = {{marginBottom: 100}}></View>
-            <View style={styles.container}>
-                <Text style={styles.titulo}> Comentarios </Text>
                 <View style = {{marginBottom: 20}}></View>
-                <Text style={styles.texto}> Aqui pondria comentarios... </Text>
-                <Text style={styles.texto}> SI TUVIERAS ALGUNO </Text>
+                <Text style={styles.texto}> {user?.username} </Text>
+                <Text style={styles.texto}> {user?.email} </Text>
+            </View>
+            <View style = {{marginBottom: 50}}></View>
+            <View style={styles.container}>
+                <Text style={styles.titulo}>  </Text>
+                <View style = {{marginBottom: 20}}></View>
+                <Text style={styles.texto}></Text>
+                <Text style={styles.texto}>  </Text>
             </View>
             <View style={styles.container}>
             <View style = {{marginBottom: 50}}></View>
-                <TouchableOpacity onPress={() => {alert(`adios pues`); setIsLoggedIn(false)}}  style={styles.add}>
+                <TouchableOpacity onPress={handleLogout}  style={styles.add}>
                     <Text style={styles.addText}>Log out</Text>
                 </TouchableOpacity>
             </View>
@@ -114,7 +147,7 @@ const styles = StyleSheet.create({
     },
     formContainer: {
         width: '100%',
-        marginTop: 10,
+        marginTop: 20,
     },
     logo: {
         marginTop: 20,

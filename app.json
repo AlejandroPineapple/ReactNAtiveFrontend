@@ -18,7 +18,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/DilemaLogo.png",
         "backgroundColor": "#121212"
-      }
+      },
+      "package": "com.superpinaman.ReactNativeFrontend"
     },
     "web": {
       "favicon": "./assets/DilemaLogo.png"

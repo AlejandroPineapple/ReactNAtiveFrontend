@@ -1,28 +1,32 @@
 import { React, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput, Modal, TouchableWithoutFeedback } from 'react-native';
 import colors from '../config/colors';
-import { loginUser } from '../axios/AuthenticationService';
+import { loginUser, registerUser } from '../axios/AuthenticationService';
 import { useAuth } from '../axios/AuthenticationService';
 
-function Login({ navigation }) {
+function Register({ navigation }) {
     const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [successModalVisible, setSuccessModalVisible] = useState(false);
-    const [errorModalVisible, setErrorModalVisible] = useState(false);
-    const [successMessage, setSuccessMessage] = useState("");
-    const [errorMessage, setErrorMessage] = useState("");
     const { setIsLoggedIn } = useAuth();
 
-    const handleLogin = async () => {
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
+
+    const handleRegister = async () => {
         try {
-            console.log('Intentando iniciar sesión con:', email, password);
-            const response = await loginUser(email, password);
-            setIsLoggedIn(true);
-            setSuccessMessage("Inicio de sesión exitoso.");
+            const response = await registerUser(username, password, email);
+            const mensaje = response.data?.message || "¡Registro exitoso!";
+            setSuccessMessage(mensaje);
             setSuccessModalVisible(true);
+
+            const response2 = await loginUser(email, password);
+            setIsLoggedIn(true);
+            navigation.navigate('Profile');
         } catch (error) {
-            console.error('Error en loginUser:', error);
-            const errorMessage = error.response?.data?.message || "Credenciales incorrectas.";
+            const errorMessage = error.response?.data?.message || 'Credenciales incorrectas';
             setErrorMessage(errorMessage);
             setErrorModalVisible(true);
         }
@@ -31,7 +35,7 @@ function Login({ navigation }) {
     return (
         <View style={styles.background}>
             <View style={styles.container}>
-                <Text style={styles.titulo}> Loggeate Aquí </Text>
+                <Text style={styles.titulo}> Regístrate Aquí </Text>
                 <View style={styles.formContainer}>
                     <Text style={styles.texto}> Email </Text>
                     <TextInput
@@ -41,49 +45,29 @@ function Login({ navigation }) {
                         style={styles.input}
                         placeholderTextColor={colors.placeholder}
                     />
+                    <Text style={styles.texto}> Username </Text>
+                    <TextInput
+                        placeholder="Pon algo original"
+                        value={username}
+                        onChangeText={(text1) => setUsername(text1)}
+                        style={styles.input}
+                        placeholderTextColor={colors.placeholder}
+                    />
                     <Text style={styles.texto}> Contraseña </Text>
                     <TextInput
-                        placeholder="Espero no hayas puesto 123"
+                        placeholder="Por el amor de dios no pongas 123"
                         secureTextEntry={true}
                         value={password}
                         onChangeText={(text2) => setPassword(text2)}
                         style={styles.input}
                         placeholderTextColor={colors.placeholder}
                     />
-                    <TouchableOpacity onPress={handleLogin} style={styles.add}>
-                        <Text style={styles.addText}>Login :)</Text>
+                    <TouchableOpacity onPress={handleRegister} style={styles.add}>
+                        <Text style={styles.addText}>Registrarse :)</Text>
                     </TouchableOpacity>
                 </View>
                 <Image source={require('../assets/DilemaLogo.png')} style={styles.logo} />
             </View>
-
-            {/* Modal de Éxito */}
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={successModalVisible}
-                onRequestClose={() => {
-                    setSuccessModalVisible(false);
-                    navigation.navigate('Profile');
-                }}
-            >
-                <TouchableWithoutFeedback onPress={() => setSuccessModalVisible(false)}>
-                    <View style={styles.modalOverlay} />
-                </TouchableWithoutFeedback>
-                <View style={styles.modalContainer}>
-                    <Text style={styles.modalTitle}>¡Éxito!</Text>
-                    <Text style={styles.modalMessage}>{successMessage}</Text>
-                    <TouchableOpacity
-                        onPress={() => {
-                            setSuccessModalVisible(false);
-                            navigation.navigate('Profile');
-                        }}
-                        style={styles.modalButton}
-                    >
-                        <Text style={styles.modalButtonText}>Continuar</Text>
-                    </TouchableOpacity>
-                </View>
-            </Modal>
 
             {/* Modal de Error */}
             <Modal
@@ -99,6 +83,25 @@ function Login({ navigation }) {
                     <Text style={styles.modalTitle}>Error</Text>
                     <Text style={styles.modalMessage}>{errorMessage}</Text>
                     <TouchableOpacity onPress={() => setErrorModalVisible(false)} style={styles.modalButton}>
+                        <Text style={styles.modalButtonText}>Cerrar</Text>
+                    </TouchableOpacity>
+                </View>
+            </Modal>
+
+            {/* Modal de Éxito */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={successModalVisible}
+                onRequestClose={() => setSuccessModalVisible(false)}
+            >
+                <TouchableWithoutFeedback onPress={() => setSuccessModalVisible(false)}>
+                    <View style={styles.modalOverlay} />
+                </TouchableWithoutFeedback>
+                <View style={styles.modalContainer}>
+                    <Text style={styles.modalTitle}>¡Éxito!</Text>
+                    <Text style={styles.modalMessage}>{successMessage}</Text>
+                    <TouchableOpacity onPress={() => setSuccessModalVisible(false)} style={styles.modalButton}>
                         <Text style={styles.modalButtonText}>Cerrar</Text>
                     </TouchableOpacity>
                 </View>
@@ -202,4 +205,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default Login;
+export default Register;
